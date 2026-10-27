@@ -1,0 +1,92 @@
+========================================
+Garbage Collector Started
+========================================
+Registered object #2 [Person]
+Added root object #2
+Starting garbage collection...
+GC completed | Before: 2 | Collected: 1 | Remaining: 1
+========================================
+Garbage Collector Started
+========================================
+Registered object #2 [Person]
+Registered object #3 [Person]
+Added root object #2
+Starting garbage collection...
+Collecting object #3 [Person]
+GC completed | Before: 2 | Collected: 1 | Remaining: 1
+Registered object #4 [Node]
+Registered object #5 [Node]
+Registered object #6 [Node]
+Added root object #4
+Starting garbage collection...
+GC completed | Before: 4 | Collected: 0 | Remaining: 4
+Registered object #7 [Node]
+Registered object #8 [Node]
+Starting garbage collection...
+Collecting object #7 [Node]
+Collecting object #8 [Node]
+GC completed | Before: 6 | Collected: 2 | Remaining: 4
+Removed root object #2
+Starting garbage collection...
+Collecting object #2 [Person]
+GC completed | Before: 4 | Collected: 1 | Remaining: 3
+Starting garbage collection...
+GC completed | Before: 3 | Collected: 0 | Remaining: 3
+
+========================================
+Garbage Collector Started
+========================================
+Registered object #2 [TestObject]
+Added root object #2
+Starting garbage collection...
+GC completed | Before: 1 | Collected: 0 | Remaining: 1
+Removed root object #2
+Starting garbage collection...
+Collecting object #2 [TestObject]
+GC completed | Before: 1 | Collected: 1 | Remaining: 0
+Starting garbage collection...
+GC completed | Before: 0 | Collected: 0 | Remaining: 0
+
+========================================
+Garbage Collector Started
+========================================
+Registered object #3 [TestObject]
+Registered object #4 [TestObject]
+Added root object #3
+Starting garbage collection...
+GC completed | Before: 2 | Collected: 0 | Remaining: 2
+Removed root object #3
+Starting garbage collection...
+Collecting object #4 [TestObject]
+Collecting object #3 [TestObject]
+GC completed | Before: 2 | Collected: 2 | Remaining: 0
+Starting garbage collection...
+GC completed | Before: 0 | Collected: 0 | Remaining: 0
+
+========================================
+Garbage Collector Started
+========================================
+Registered object #2 [Person]
+Registered object #3 [Person]
+Added root object #2
+Starting garbage collection...
+Collecting object #3 [Person]
+GC completed | Before: 2 | Collected: 1 | Remaining: 1
+Registered object #4 [Node]
+Registered object #5 [Node]
+Registered object #6 [Node]
+Added root object #4
+Starting garbage collection...
+GC completed | Before: 4 | Collected: 0 | Remaining: 4
+Registered object #7 [Node]
+Registered object #8 [Node]
+Starting garbage collection...
+Collecting object #7 [Node]
+Collecting object #8 [Node]
+GC completed | Before: 6 | Collected: 2 | Remaining: 4
+Removed root object #2
+Starting garbage collection...
+Collecting object #2 [Person]
+GC completed | Before: 4 | Collected: 1 | Remaining: 3
+Starting garbage collection...
+GC completed | Before: 3 | Collected: 0 | Remaining: 3
