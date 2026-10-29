@@ -5,6 +5,11 @@
 #include <iostream>
 #include <sstream>
 
+GarbageCollector& GarbageCollector::getInstance()
+{
+    static GarbageCollector instance;
+    return instance;
+}
 GarbageCollector::GarbageCollector(
     const std::string& logFilePath
 )

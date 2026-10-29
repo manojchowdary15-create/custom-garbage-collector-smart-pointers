@@ -27,6 +27,10 @@ private:
     void log(const std::string& message) const;
 
 public:
+
+    // Singleton access
+    static GarbageCollector& getInstance();
+
     explicit GarbageCollector(
         const std::string& logFilePath = "data/gc_log.txt"
     );

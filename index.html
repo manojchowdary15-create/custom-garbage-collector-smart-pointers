@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>C++ Smart Pointer & Garbage Collector Visualizer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Top Navigation Header -->
+    <header class="top-nav">
+      <div class="nav-brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+            <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+            <rect x="8" y="14" width="7" height="7" rx="1.5"></rect>
+            <path d="M6.5 10v2a2 2 0 0 0 2 2h3m6-4v2a2 2 0 0 1-2 2h-3"></path>
+          </svg>
+        </div>
+        <div>
+          <h1>C++ Garbage Collector & Smart Pointer Visualizer</h1>
+          <p class="subtitle">Interactive Mark-and-Sweep GC &amp; RAII Reference Counting Simulator</p>
+        </div>
+      </div>
+
+      <div class="nav-controls">
+        <div class="sim-pill-group">
+          <span class="sim-indicator" id="simStatusPill">Ready</span>
+          <span class="step-counter" id="stepCounterDisplay">Step: 0 / 30</span>
+        </div>
+
+        <div class="header-actions">
+          <button id="stepSimBtn" class="btn btn-secondary" title="Execute next simulation step">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            Step C++
+          </button>
+          <button id="playPauseSimBtn" class="btn btn-secondary" title="Auto-run C++ 30-step simulation">
+            <svg id="playIcon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <span id="playPauseText">Auto Run</span>
+          </button>
+          <button id="collectBtn" class="btn btn-primary" title="Trigger Mark and Sweep Garbage Collection">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+            Collect Garbage
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Metrics Bar -->
+    <section class="metrics-bar">
+      <div class="metric-card">
+        <div class="metric-icon heap-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="M3 9h18M9 21V9"></path></svg>
+        </div>
+        <div class="metric-content">
+          <span class="metric-label">Heap Objects</span>
+          <div class="metric-value-wrap">
+            <strong id="liveObjectsStat" class="metric-value">0</strong>
+            <span class="metric-sub" id="heapBytesStat">0 B</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon root-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><polygon points="12 6 15 11 9 11"></polygon><line x1="12" y1="11" x2="12" y2="17"></line></svg>
+        </div>
+        <div class="metric-content">
+          <span class="metric-label">Root References</span>
+          <div class="metric-value-wrap">
+            <strong id="rootObjectsStat" class="metric-value">0</strong>
+            <span class="metric-sub">Stack / Ptrs</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon cycles-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-1.19"></path></svg>
+        </div>
+        <div class="metric-content">
+          <span class="metric-label">Cycle Leaks Prevented</span>
+          <div class="metric-value-wrap">
+            <strong id="cyclesPreventedStat" class="metric-value">0</strong>
+            <span class="metric-sub">Unreachable</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon sweeps-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+        </div>
+        <div class="metric-content">
+          <span class="metric-label">GC Collections</span>
+          <div class="metric-value-wrap">
+            <strong id="collectionsStat" class="metric-value">0</strong>
+            <span class="metric-sub"><span id="collectedStat">0</span> swept</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon phase-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        </div>
+        <div class="metric-content">
+          <span class="metric-label">Current GC Phase</span>
+          <div class="metric-value-wrap">
+            <span id="phaseBadge" class="phase-badge idle">Idle</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Visualizer Layout -->
+    <main class="main-grid">
+      <!-- Left Sidebar: Controls & Scenarios -->
+      <aside class="sidebar-left">
+        <!-- Preset Scenarios -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Simulation Presets</h3>
+          </div>
+          <div class="preset-buttons">
+            <button class="preset-btn active" data-preset="cpp-main">
+              <span class="preset-title">🎮 C++ main.cpp Sim</span>
+              <span class="preset-desc">30-step seeded simulation from project driver</span>
+            </button>
+            <button class="preset-btn" data-preset="cyclic-leak">
+              <span class="preset-title">🔄 Circular Reference Trap</span>
+              <span class="preset-desc">Ref count = 1, but orphan! GC sweeps it</span>
+            </button>
+            <button class="preset-btn" data-preset="linked-list">
+              <span class="preset-title">⛓️ Doubly Linked Chain</span>
+              <span class="preset-desc">Head/Tail pointers and middle unlinking</span>
+            </button>
+            <button class="preset-btn" data-preset="island-isolation">
+              <span class="preset-title">🏝️ Island of Isolation</span>
+              <span class="preset-desc">Dense subgraph completely severed from Root</span>
+            </button>
+            <button class="preset-btn" data-preset="binary-tree">
+              <span class="preset-title">🌲 Binary Tree Hierarchy</span>
+              <span class="preset-desc">Tree nodes with left/right child pointers</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Manual Object & Pointer Controls -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Manual Graph Editing</h3>
+          </div>
+          <div class="control-group">
+            <button id="addObjectBtn" class="btn btn-secondary full-width">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+              Allocate Node (new GCObject)
+            </button>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label for="sourceSelect">Source Pointer</label>
+              <select id="sourceSelect"></select>
+            </div>
+            <div class="form-field">
+              <label for="targetSelect">Target Node</label>
+              <select id="targetSelect"></select>
+            </div>
+          </div>
+
+          <div class="button-row">
+            <button id="linkBtn" class="btn btn-secondary flex-1" title="Link source->target (SmartPointer)">
+              🔗 Link Pointer
+            </button>
+            <button id="unlinkBtn" class="btn btn-secondary flex-1" title="Sever reference">
+              ✂️ Sever
+            </button>
+          </div>
+
+          <div class="button-row mt-2">
+            <button id="toggleRootBtn" class="btn btn-secondary flex-1" title="Hold/release from stack root">
+              ⭐ Toggle Root
+            </button>
+            <button id="deleteNodeBtn" class="btn btn-secondary danger-text flex-1" title="Delete selected node">
+              🗑️ Delete
+            </button>
+          </div>
+        </div>
+
+        <!-- Simulation Speed & Reset -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Playback Controls</h3>
+          </div>
+          <div class="form-field">
+            <div class="slider-label-row">
+              <label for="speedSlider">Speed</label>
+              <span id="speedValueText" class="slider-val">1.0x</span>
+            </div>
+            <input type="range" id="speedSlider" min="0.25" max="3" step="0.25" value="1" />
+          </div>
+          <div class="button-row">
+            <button id="reLayoutBtn" class="btn btn-secondary flex-1" title="Auto-arrange nodes neatly">
+              📐 Auto Layout
+            </button>
+            <button id="resetSimBtn" class="btn btn-secondary danger-btn flex-1" title="Reset everything">
+              ↺ Reset All
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Center: Interactive SVG / Node Canvas -->
+      <section class="canvas-section">
+        <div class="canvas-header">
+          <div class="canvas-tabs">
+            <button class="canvas-tab active" data-tab="graph">Visual Memory Graph</button>
+            <button class="canvas-tab" data-tab="heap-table">Heap Memory Map</button>
+            <button class="canvas-tab" data-tab="architecture">C++ Architecture Guide</button>
+          </div>
+          <div class="canvas-legend">
+            <span class="legend-item"><span class="legend-dot root-dot"></span> Stack Root</span>
+            <span class="legend-item"><span class="legend-dot marked-dot"></span> Reachable</span>
+            <span class="legend-item"><span class="legend-dot garbage-dot"></span> Garbage (Unreachable)</span>
+            <span class="legend-item"><span class="legend-dot pointer-dot"></span> SmartPointer Reference</span>
+          </div>
+        </div>
+
+        <!-- Graph View Tab -->
+        <div id="graphTabView" class="tab-content active">
+          <div class="canvas-container" id="canvasContainer">
+            <div class="canvas-hint">💡 Drag nodes to rearrange • Click on nodes to toggle Root or inspect • Double click to connect</div>
+            <svg id="svgGraph" class="svg-layer">
+              <defs>
+                <!-- Standard Pointer Arrow -->
+                <marker id="arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#64748b" />
+                </marker>
+                <!-- Reachable / Active Arrow -->
+                <marker id="arrow-active" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 1 L 9 5 L 0 9 z" fill="#38bdf8" />
+                </marker>
+                <!-- Garbage / Severed Arrow -->
+                <marker id="arrow-garbage" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f43f5e" />
+                </marker>
+                <!-- Glow Filters -->
+                <filter id="cyanGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+              <g id="svgEdgeGroup"></g>
+            </svg>
+            <div id="nodesContainer" class="nodes-layer"></div>
+          </div>
+        </div>
+
+        <!-- Heap Memory Table Tab -->
+        <div id="heapTableTabView" class="tab-content">
+          <div class="table-container">
+            <table class="heap-table">
+              <thead>
+                <tr>
+                  <th>Address</th>
+                  <th>ID / Name</th>
+                  <th>Type</th>
+                  <th>ControlBlock RefCount</th>
+                  <th>Root (Stack)</th>
+                  <th>GC Mark Bit</th>
+                  <th>Outgoing Pointers</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="heapTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Architecture Guide Tab -->
+        <div id="architectureTabView" class="tab-content">
+          <div class="architecture-guide">
+            <div class="guide-grid">
+              <div class="guide-card">
+                <h4>🛡️ SmartPointer&lt;T&gt; &amp; RAII</h4>
+                <p>Implements standard C++ Reference Counting with a shared <code>ControlBlock&lt;T&gt;</code>. Increments on copy, decrements on destruction.</p>
+                <div class="code-box">
+template &lt;typename T&gt;
+class SmartPointer {
+  T* ptr;
+  ControlBlock&lt;T&gt;* controlBlock;
+  // Automatic RAII increment/decrement
+};</div>
+              </div>
+              <div class="guide-card">
+                <h4>⚠️ The Circular Reference Problem</h4>
+                <p>When Node A points to Node B and Node B points to Node A, both have <code>referenceCount = 1</code> even after all stack root pointers are destroyed! Pure reference counting fails to free this cycle.</p>
+                <div class="code-box">
+rootA-&gt;next = rootB;
+rootB-&gt;next = rootA;
+root_pointers.clear(); // Leak! RC still 1</div>
+              </div>
+              <div class="guide-card">
+                <h4>🧹 Mark-and-Sweep Garbage Collection</h4>
+                <p>The <code>GarbageCollector</code> solves the circular leak:</p>
+                <ul>
+                  <li><strong>Mark Phase:</strong> Traces all reachable nodes starting from the Root Set (stack/global pointers).</li>
+                  <li><strong>Sweep Phase:</strong> Traverses the entire heap. Any object with <code>marked == false</code> is unreachable garbage and is safely destroyed, reclaiming memory regardless of circular refCounts!</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Sidebar: Active Step & Live Node Inspector -->
+      <aside class="sidebar-right">
+        <!-- C++ Step Detail Panel -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3>C++ Simulation Step</h3>
+            <span id="stepActionBadge" class="badge">Case 0: Idle</span>
+          </div>
+          <div class="sim-step-detail" id="simStepDetail">
+            <p class="step-desc" id="stepDescription">Ready to run. Click <strong>Step C++</strong> or <strong>Auto Run</strong> to simulate <code>main.cpp</code>.</p>
+            <div class="code-preview" id="stepCodePreview">// main.cpp snippet will show here</div>
+          </div>
+        </div>
+
+        <!-- Selected Node Inspector -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Object Inspector</h3>
+            <span id="inspectorNodeId" class="badge">None</span>
+          </div>
+          <div id="inspectorContent" class="inspector-body">
+            <div class="empty-state">Select or click any node on the canvas to inspect its Control Block and memory state.</div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Bottom Panel: Real-time Terminal Log -->
+    <footer class="terminal-panel">
+      <div class="terminal-header">
+        <div class="terminal-title">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+          Runtime Simulation &amp; Garbage Collector Console
+        </div>
+        <div class="terminal-actions">
+          <div class="log-filter-group">
+            <button class="log-filter active" data-filter="all">All</button>
+            <button class="log-filter" data-filter="sim">Sim [Sim]</button>
+            <button class="log-filter" data-filter="gc">GC [Sweep/Mark]</button>
+          </div>
+          <button id="copyLogBtn" class="btn-icon" title="Copy Log to Clipboard">📋 Copy</button>
+          <button id="clearLogBtn" class="btn-icon" title="Clear Console">🧹 Clear</button>
+        </div>
+      </div>
+      <div class="terminal-body" id="terminalOutput">
+        <!-- Lines dynamically populated -->
+      </div>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
